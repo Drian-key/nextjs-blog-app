@@ -1,6 +1,9 @@
 "use client";
 
 import { FormData } from "@/types/blog";
+import axios from "axios";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import React, { ChangeEvent, FormEvent, useState } from "react";
 import ReactTextareaAutosize from "react-textarea-autosize";
 
@@ -12,6 +15,8 @@ const FormNewPost = () => {
     title: "",
     content: "",
   });
+  const { data } = useSession();
+  const router = useRouter();
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -21,9 +26,19 @@ const FormNewPost = () => {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(formData);
+
+    try {
+      const response = await axios.post("api/posts", formData);
+
+      if (response.status === 200) {
+        router.push(`/blogs/${response.data.data.id}`);
+        router.refresh();
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -49,6 +64,7 @@ const FormNewPost = () => {
         />
       </div>
       <button
+        disabled={!data?.user.email}
         type="submit"
         className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring focus:border-blue-300 w-full disabled:bg-gray-300">
         Submit
